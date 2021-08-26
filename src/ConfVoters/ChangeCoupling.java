@@ -15,6 +15,10 @@ public class ChangeCoupling {
         this.map=map;
     }
 
+    public ChangeCoupling(){
+
+    }
+
     private boolean inSameCommit(Beans.Commit commit, String path1, String path2){
         int counter=0;
         for(CommitChange change : commit.getChanges()){
@@ -34,5 +38,13 @@ public class ChangeCoupling {
         }
 
         return counter;
+    }
+
+    public HashMap<String, Commit> getMap() {
+        return map;
+    }
+
+    public void setMap(HashMap<String, Commit> map) {
+        this.map = map;
     }
 }
