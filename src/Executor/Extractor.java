@@ -6,21 +6,22 @@ import org.repodriller.RepositoryMining;
 import org.repodriller.filter.range.Commits;
 import org.repodriller.scm.GitRemoteRepository;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Extractor {
 
-    ArrayList<Commit> commitList;
+    HashMap<String, Commit> commitList;
     String repoUrl;
 
     public Extractor(String repoUrl){
         this.repoUrl=repoUrl;
+        this.commitList=new HashMap<>();
     }
 
-    public ArrayList<Commit> doExtract(){
+    public HashMap<String, Commit> doExtract(){
 
         new RepositoryMining()
-                .in(GitRemoteRepository.hostedOn("https://github.com/golivax/JDX.git").buildAsSCMRepository())
+                .in(GitRemoteRepository.hostedOn(repoUrl).buildAsSCMRepository())
                 .through(Commits.all())
                 .process(new RepoVisitor(this))
                 .mine();
@@ -28,11 +29,11 @@ public class Extractor {
         return commitList;
     }
 
-    public ArrayList<Commit> getCommitList() {
+    public HashMap<String, Commit> getCommitList() {
         return commitList;
     }
 
-    public void setCommitList(ArrayList<Commit> commitList) {
+    public void setCommitList(HashMap<String, Commit> commitList) {
         this.commitList = commitList;
     }
 
