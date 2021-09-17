@@ -6,6 +6,8 @@ import java.util.List;
 public class Partition {
 
     private int id;
+    private List<Integer> generatedFrom;
+    private List<String> paths;
     private List<PartitionItem> partitionItemList;
     private boolean active;
 
@@ -13,6 +15,8 @@ public class Partition {
         id=-1;
         partitionItemList=new ArrayList<>();
         active=true;
+        generatedFrom=new ArrayList<>();
+        paths=new ArrayList<>();
     }
 
     public int getId() {
@@ -52,37 +56,52 @@ public class Partition {
         }
     }
 
+    public List<Integer> getGeneratedFrom() {
+        return generatedFrom;
+    }
+
+    public void setGeneratedFrom(List<Integer> generatedFrom) {
+        this.generatedFrom = generatedFrom;
+    }
+
+    public List<String> getPaths() {
+        return paths;
+    }
+
+    public void setPaths(List<String> paths) {
+        this.paths = paths;
+    }
+
+
     public PartitionItem findMax(){
-        if(partitionItemList.isEmpty()) return null;
 
-        PartitionItem max=partitionItemList.get(0);
+        List<PartitionItem> actives=new ArrayList<>();
+        for(PartitionItem pItem : partitionItemList){
+            if(pItem.isActive()) actives.add(pItem);
+        }
 
-        for(int i=0; i<partitionItemList.size(); i++){
-            for(int j=1; j<partitionItemList.size()-1; j++){
-                if(partitionItemList.get(j).getConfidenceValue()>max.getConfidenceValue())
-                    max=partitionItemList.get(j);
+        if(actives.isEmpty()) return null;
+        PartitionItem max=actives.get(0);
+
+
+        for(PartitionItem item : actives){
+            if(item.getConfidenceValue()> max.getConfidenceValue()){
+                max=item;
             }
         }
 
         return max;
     }
 
-    public PartitionItem findOne(int i, int  j){
-
-        for(PartitionItem p : partitionItemList){
-            if(p.getI()==i && p.getJ()==j)
-                return p;
-        }
-
-        return null;
-    }
 
     @Override
     public String toString() {
         return "Partition{" +
                 "id=" + id +
+                ", generatedFrom=" + generatedFrom +
+                ", paths=" + paths +
                 ", partitionItemList=" + partitionItemList +
                 ", active=" + active +
-                '}';
+                '}'+'\n';
     }
 }

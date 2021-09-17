@@ -3,8 +3,9 @@ package Beans;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class PartitionItem {
+public class PartitionItem implements Comparable<PartitionItem>{
 
+    private int partitionIndex;
     private boolean active;
     private int i,j, confidenceValue;
     private ArrayList<String> paths;
@@ -13,6 +14,7 @@ public class PartitionItem {
         active=true;
         i=-1;
         j=-1;
+        partitionIndex=-1;
         paths=new ArrayList<>();
         confidenceValue=-1;
     }
@@ -57,12 +59,26 @@ public class PartitionItem {
         this.paths = paths;
     }
 
+    public int getPartitionIndex() {
+        return partitionIndex;
+    }
+
+    public void setPartitionIndex(int partitionIndex) {
+        this.partitionIndex = partitionIndex;
+    }
+
     @Override
     public boolean equals(Object x){
 
         PartitionItem p=(PartitionItem) x;
 
         return p.getI()==this.i && p.getJ()==this.j && p.getConfidenceValue()==this.confidenceValue;
+    }
+
+
+    @Override
+    public int compareTo(PartitionItem o) {
+        return (confidenceValue < o.getConfidenceValue()) ? -1 : ((confidenceValue == o.getConfidenceValue()) ? 0 : 1);
     }
 
     @Override
@@ -75,4 +91,6 @@ public class PartitionItem {
                 ", paths=" + paths +
                 '}'+'\n';
     }
+
+
 }

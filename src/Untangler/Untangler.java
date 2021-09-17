@@ -6,6 +6,9 @@ import Beans.PartitionItem;
 import ConfVoters.ChangeCoupling;
 import ConfVoters.PackageDistance;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 public class Untangler {
@@ -14,8 +17,9 @@ public class Untangler {
     private HashMap<String, Commit> map;
     private PackageDistance packageDistance;
     private ChangeCoupling changeCoupling;
-    private List<Partition> partitionList;
+    public List<Partition> partitionList;
     private int stopCondition;
+    private int startingMatrixSize=0;
 
     public Untangler(Beans.Commit commit, HashMap<String, Commit> map, int stopCondition){
         this.commit = commit;
@@ -32,50 +36,80 @@ public class Untangler {
         for(int i=0; i<commit.getChanges().size(); i++){
             Partition currentPartition=new Partition();
             currentPartition.setId(i);
+            currentPartition.getGeneratedFrom().add(i);
+            currentPartition.getPaths().add(commit.getChanges().get(i).getPath());
             for(int j=0; j<commit.getChanges().size(); j++){
-                if(i>=j) continue;
+                //if(i>=j) continue;
                 PartitionItem currentPartitionItem= new PartitionItem();
+                currentPartitionItem.setPartitionIndex(i);
                 currentPartitionItem.setI(i);
                 currentPartitionItem.setJ(j);
                 int pdValue=packageDistance.doCalculate(commit.getChanges().get(i).getPath(),commit.getChanges().get(j).getPath());
                 int ccValue=changeCoupling.doCalculate(commit.getChanges().get(i).getPath(),commit.getChanges().get(j).getPath());
-                currentPartitionItem.setConfidenceValue(pdValue); //dobbiamo cangià
+                if(i>=j){
+                    currentPartitionItem.setConfidenceValue(-1);
+                }
+                else {
+                    currentPartitionItem.setConfidenceValue(pdValue); //dobbiamo cangià
+                }
                 currentPartitionItem.getPaths().add(commit.getChanges().get(i).getPath());
                 currentPartitionItem.getPaths().add(commit.getChanges().get(j).getPath());
                 currentPartition.getPartitionItemList().add(currentPartitionItem);
             }
+            currentPartition.setActive(true);
             partitionList.add(currentPartition);
         }
 
-        //System.out.println(partitionList);
+        startingMatrixSize=partitionList.size();
 
     }
 
+    //ok
     private PartitionItem findMax(){
-        PartitionItem max= partitionList.get(0).findMax();
+        PartitionItem max=new PartitionItem();
 
+        for(Partition p : partitionList){
+            if(!p.isActive()) continue;
+            max=p.findMax();
+            break;
+        }
         for(int i=0; i<partitionList.size(); i++){
+            if(!partitionList.get(i).isActive()) continue;
             if(max==null || partitionList.get(i).findMax()==null) continue;
-            if(partitionList.get(i).findMax().getConfidenceValue() > max.getConfidenceValue()) max=partitionList.get(i).findMax();
+            if(partitionList.get(i).findMax().getConfidenceValue() > max.getConfidenceValue())
+                max=partitionList.get(i).findMax();
         }
 
         return max;
     }
 
-    private int compositeConfVoter(Partition x, Partition y){
+    private PartitionItem findOne(int i, int j){
+        if(i<=j){
+            return partitionList.get(i).getPartitionItemList().get(j);
+        }
+        else {
+            return partitionList.get(j).getPartitionItemList().get(i);
+        }
+    }
+
+    private int compositeValue(Partition a, Partition b){
 
         PriorityQueue<Integer> maxPQueue = new PriorityQueue<>(Collections.reverseOrder());
+        for(int i=0; i<a.getGeneratedFrom().size(); i++){
+            int k=a.getGeneratedFrom().get(i);
+            if(a.getGeneratedFrom().get(i)>=startingMatrixSize) continue;
+            for(int j=0; j<b.getGeneratedFrom().size(); j++){
+                if(b.getGeneratedFrom().get(j)>=startingMatrixSize) continue;
+                int z=b.getGeneratedFrom().get(j);
+                PartitionItem item=findOne(k,z);
 
-        //System.out.println(x);
-        //System.out.println(y);
-        for(int i=0; i<x.getPartitionItemList().size(); i++){
-            for(int j=0; j<y.getPartitionItemList().size(); j++ ){
-                if(partitionList.get(i).findOne(i,j) == null) continue;
-                maxPQueue.add(partitionList.get(i).findOne(i,j).getConfidenceValue());
+                if(item!=null){
+                    maxPQueue.add(item.getConfidenceValue());
+                }
 
-                //System.out.println(x+"\n"+y+" i: "+i+" j: "+j+" item: "+partitionList.get(i).findOne(i,j));
             }
         }
+
         return maxPQueue.poll();
     }
 
@@ -95,53 +129,58 @@ public class Untangler {
         return resultPartition;
     }
 
-    public List<Partition> doUntangle(){
+    public List<Partition> doUntangle() throws FileNotFoundException, UnsupportedEncodingException {
 
         buildPartitionMatrix();
 
         while(activePartition()>stopCondition){
-            //troviamo il max tra tutte le celle della matrice, ovvero il PartitionItem
+
+            //cella della matrice con il confidence value (primo incontrato)
             PartitionItem max=findMax();
             int indexI=max.getI();
             int indexJ=max.getJ();
-            //disiattivamo le righe e le colonne relative a indexI e indexJ (relative al max)
-            //disiattivamo le righe
+            //elimino (disattivo) le partizioni indexI e indexJ (righe)
             partitionList.get(indexI).setActive(false);
             partitionList.get(indexJ).setActive(false);
-            //disattivamo le colonne
+            //disattivo tutti i PartitionItem che hanno come indice j o indexI o indexJ
             for(Partition p: partitionList){
                 p.deactiveIndex(indexI);
                 p.deactiveIndex(indexJ);
             }
-            //creiamo una partizione partitionList.size()+1 che unisce le due precedenti
+            int matrixSize=partitionList.size();
+            //creo la partizione matrixSize+1
             Partition compositePartition= new Partition();
-            compositePartition.getPartitionItemList().add(max);
-            compositePartition.setId(partitionList.size());
-            for(int j=0; j<partitionList.get(j).getPartitionItemList().size(); j++){
-                PartitionItem compositePartitionItem=new PartitionItem();
-                compositePartitionItem.setI(partitionList.size());
-                compositePartitionItem.setJ(j);
-                compositePartitionItem.setConfidenceValue(compositeConfVoter(compositePartition,partitionList.get(j)));
-                /*for(String path : partitionList.get(j).getPartitionItemList().get(partitionList.size()).getPaths()){
-                    compositePartitionItem.getPaths().add(path);
-                }*/
-                compositePartition.getPartitionItemList().add(compositePartitionItem);
+            compositePartition.setId(matrixSize);
+            compositePartition.getGeneratedFrom().addAll(Arrays.asList(matrixSize,indexI,indexJ));
+            compositePartition.getPaths().addAll(partitionList.get(indexI).getPaths());
+            compositePartition.getPaths().addAll(partitionList.get(indexJ).getPaths());
+            for(int j=0; j<matrixSize; j++){
+                if(partitionList.get(j).isActive()==false){
+                    continue;
+                }
+                PartitionItem compositeItem=new PartitionItem();
+                compositeItem.setI(matrixSize);
+                compositeItem.setJ(j);
+                compositeItem.getPaths().addAll(compositePartition.getPaths());
+                compositeItem.getPaths().addAll(partitionList.get(j).getPaths());
+                compositeItem.setConfidenceValue(compositeValue(compositePartition,partitionList.get(j)));
+                compositePartition.getPartitionItemList().add(compositeItem);
             }
             partitionList.add(compositePartition);
-            for(int k=0; k<partitionList.size(); k++){
-                PartitionItem compositePartionItem= new PartitionItem();
-                compositePartionItem.setI(k);
-                compositePartionItem.setJ(partitionList.size());
-                int confidenceValue=compositeConfVoter(partitionList.get(k),compositePartition);
-                compositePartionItem.setConfidenceValue(confidenceValue);
-                /*for(String path: partitionList.get(partitionList.size()).getPartitionItemList().get(k).getPaths()){
-                    compositePartionItem.getPaths().add(path);
-                }*/
-                partitionList.get(k).getPartitionItemList().add(compositePartionItem);
+            matrixSize=partitionList.size();
+            for(int i=0; i<matrixSize; i++){
+                if(partitionList.get(i).isActive()==false){
+                    continue;
+                }
+                PartitionItem compositeItem=new PartitionItem();
+                compositeItem.setI(i);
+                compositeItem.setJ(matrixSize);
+                compositeItem.getPaths().addAll(partitionList.get(i).getPaths());
+                compositeItem.getPaths().addAll(partitionList.get(matrixSize-1).getPaths());
+                compositeItem.setConfidenceValue(compositeValue(partitionList.get(i),partitionList.get(matrixSize-1)));
+                partitionList.get(i).getPartitionItemList().add(compositeItem);
             }
-
         }
-
 
         return getActivePartitions();
     }
