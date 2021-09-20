@@ -10,7 +10,7 @@ import java.util.HashMap;
 
 public class Extractor {
 
-    HashMap<String, Commit> commitList;
+    HashMap<String, Beans.Commit> commitList;
     String repoUrl;
 
     public Extractor(String repoUrl){

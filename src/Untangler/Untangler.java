@@ -7,7 +7,6 @@ import ConfVoters.ChangeCoupling;
 import ConfVoters.PackageDistance;
 
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 
@@ -92,9 +91,9 @@ public class Untangler {
         }
     }
 
-    private int compositeValue(Partition a, Partition b){
+    private Double compositeValue(Partition a, Partition b){
 
-        PriorityQueue<Integer> maxPQueue = new PriorityQueue<>(Collections.reverseOrder());
+        PriorityQueue<Double> maxPQueue = new PriorityQueue<>(Collections.reverseOrder());
         for(int i=0; i<a.getGeneratedFrom().size(); i++){
             int k=a.getGeneratedFrom().get(i);
             if(a.getGeneratedFrom().get(i)>=startingMatrixSize) continue;

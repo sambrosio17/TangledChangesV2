@@ -1,13 +1,13 @@
 package Beans;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class PartitionItem implements Comparable<PartitionItem>{
 
     private int partitionIndex;
     private boolean active;
-    private int i,j, confidenceValue;
+    private int i,j;
+    private double confidenceValue;
     private ArrayList<String> paths;
 
     public PartitionItem(){
@@ -43,11 +43,11 @@ public class PartitionItem implements Comparable<PartitionItem>{
         this.j = j;
     }
 
-    public int getConfidenceValue() {
+    public double getConfidenceValue() {
         return confidenceValue;
     }
 
-    public void setConfidenceValue(int confidenceValue) {
+    public void setConfidenceValue(double confidenceValue) {
         this.confidenceValue = confidenceValue;
     }
 
