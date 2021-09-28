@@ -9,10 +9,16 @@ import java.util.Map;
 
 public class ChangeCoupling {
 
+    private int upperBound;
     private HashMap<String, Beans.Commit> map;
 
     public ChangeCoupling(HashMap<String, Beans.Commit> map){
         this.map=map;
+    }
+
+    public ChangeCoupling(HashMap<String, Beans.Commit> map, int upperBound) {
+        this.map=map;
+        this.upperBound=upperBound;
     }
 
     public ChangeCoupling(){
@@ -28,7 +34,7 @@ public class ChangeCoupling {
         return counter==2;
     }
 
-    public int doCalculate(String path1, String path2){
+    public double doCalculate(String path1, String path2){
         int counter=0;
 
         Iterator<Map.Entry<String, Commit>>it=map.entrySet().iterator();
@@ -37,7 +43,7 @@ public class ChangeCoupling {
             if(inSameCommit(it.next().getValue(),path1,path2)) counter++;
         }
 
-        return counter;
+        return (counter/upperBound); //riportiamo il valore a decimale
     }
 
     public HashMap<String, Commit> getMap() {
@@ -46,5 +52,13 @@ public class ChangeCoupling {
 
     public void setMap(HashMap<String, Commit> map) {
         this.map = map;
+    }
+
+    public int getUpperBound() {
+        return upperBound;
+    }
+
+    public void setUpperBound(int upperBound) {
+        this.upperBound = upperBound;
     }
 }

@@ -1,6 +1,18 @@
 package ConfVoters;
 
+import org.eclipse.jgit.internal.storage.file.Pack;
+
 public class PackageDistance {
+
+    private int upperBound;
+
+    public PackageDistance(){
+
+    }
+
+    public PackageDistance(int upperBound){
+        this.upperBound = upperBound;
+    }
 
     public int doCalculate(String path1,String path2){
 
@@ -26,6 +38,14 @@ public class PackageDistance {
             }
         }
 
-        return counter;
+        return  1-(counter/upperBound); //porto il valore di counter a decimale e gli sottraggo 1 per dargli un livello di bontà positivo
+    }
+
+    public int getUpperBound() {
+        return upperBound;
+    }
+
+    public void setUpperBound(int upperBound) {
+        this.upperBound = upperBound;
     }
 }

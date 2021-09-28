@@ -1,6 +1,7 @@
 package Untangler;
 
 import Beans.Commit;
+import Beans.CommitChange;
 import Beans.Partition;
 import Beans.PartitionItem;
 import ConfVoters.ChangeCoupling;
@@ -21,17 +22,45 @@ public class Untangler {
     private int startingMatrixSize=0;
 
     public Untangler(Beans.Commit commit, HashMap<String, Commit> map, int stopCondition){
+        System.out.println("costruttore\n"+commit);
         this.commit = commit;
         this.map= map;
         this.stopCondition = stopCondition;
-        packageDistance=new PackageDistance();
-        changeCoupling=new ChangeCoupling(map);
+        packageDistance=new PackageDistance(longestPathSize());
+        changeCoupling=new ChangeCoupling(map, map.size());
         partitionList=new ArrayList<>();
 
     }
 
-    public void buildPartitionMatrix(){
+    private int longestPathSize(){
 
+        Iterator<Map.Entry<String, Commit>>it=map.entrySet().iterator();
+
+        Commit commit=it.next().getValue();
+        int max=longestPathCommit(commit);
+
+        int current=-1;
+        while(it.hasNext()){
+            current=longestPathCommit(it.next().getValue());
+            if(max<current) max=current;
+        }
+        return max;
+    }
+
+    private int longestPathCommit(Commit c){
+
+        int max=c.getChanges().get(0).getPath().split("/").length;
+        int current=-1;
+        for(CommitChange cc : c.getChanges()){
+            current=cc.getPath().split("/").length;
+            if(max<current) max=current;
+        }
+
+        return max;
+    }
+
+
+    public void buildPartitionMatrix(){
         for(int i=0; i<commit.getChanges().size(); i++){
             Partition currentPartition=new Partition();
             currentPartition.setId(i);
@@ -43,13 +72,14 @@ public class Untangler {
                 currentPartitionItem.setPartitionIndex(i);
                 currentPartitionItem.setI(i);
                 currentPartitionItem.setJ(j);
-                int pdValue=packageDistance.doCalculate(commit.getChanges().get(i).getPath(),commit.getChanges().get(j).getPath());
-                int ccValue=changeCoupling.doCalculate(commit.getChanges().get(i).getPath(),commit.getChanges().get(j).getPath());
+                double pdValue=packageDistance.doCalculate(commit.getChanges().get(i).getPath(),commit.getChanges().get(j).getPath());
+                double ccValue=changeCoupling.doCalculate(commit.getChanges().get(i).getPath(),commit.getChanges().get(j).getPath());
+                double confidence=(pdValue+ccValue)/2;
                 if(i>=j){
                     currentPartitionItem.setConfidenceValue(-1);
                 }
                 else {
-                    currentPartitionItem.setConfidenceValue(pdValue); //dobbiamo cangià
+                    currentPartitionItem.setConfidenceValue(confidence);
                 }
                 currentPartitionItem.getPaths().add(commit.getChanges().get(i).getPath());
                 currentPartitionItem.getPaths().add(commit.getChanges().get(j).getPath());
@@ -93,6 +123,8 @@ public class Untangler {
 
     private Double compositeValue(Partition a, Partition b){
 
+        System.out.println("chiamata");
+        //System.out.println("a ids: "+a.getGeneratedFrom()+"b ids: "+b.getGeneratedFrom());
         PriorityQueue<Double> maxPQueue = new PriorityQueue<>(Collections.reverseOrder());
         for(int i=0; i<a.getGeneratedFrom().size(); i++){
             int k=a.getGeneratedFrom().get(i);
@@ -106,10 +138,12 @@ public class Untangler {
                     maxPQueue.add(item.getConfidenceValue());
                 }
 
+                System.out.println("A: "+a.getId()+" B: "+b.getId()+" value: "+item.getConfidenceValue());
+
             }
         }
 
-        return maxPQueue.poll();
+        return maxPQueue.poll();/*!= null ? maxPQueue.poll() : -1;*/
     }
 
     private int activePartition(){
@@ -151,8 +185,15 @@ public class Untangler {
             Partition compositePartition= new Partition();
             compositePartition.setId(matrixSize);
             compositePartition.getGeneratedFrom().addAll(Arrays.asList(matrixSize,indexI,indexJ));
+            //compositePartition.getGeneratedFrom().add(matrixSize);
+            //compositePartition.getGeneratedFrom().addAll(partitionList.get(indexI).getGeneratedFrom());
+            //compositePartition.getGeneratedFrom().addAll(partitionList.get(indexI).getGeneratedFrom());
             compositePartition.getPaths().addAll(partitionList.get(indexI).getPaths());
             compositePartition.getPaths().addAll(partitionList.get(indexJ).getPaths());
+            int min=Collections.min(compositePartition.getGeneratedFrom());
+            System.out.println("generate: "+compositePartition.getGeneratedFrom());
+            System.out.println(min);
+            if(min>=startingMatrixSize) break;
             for(int j=0; j<matrixSize; j++){
                 if(partitionList.get(j).isActive()==false){
                     continue;
