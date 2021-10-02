@@ -22,7 +22,6 @@ public class Untangler {
     private int startingMatrixSize=0;
 
     public Untangler(Beans.Commit commit, HashMap<String, Commit> map, int stopCondition){
-        System.out.println("costruttore\n"+commit);
         this.commit = commit;
         this.map= map;
         this.stopCondition = stopCondition;
@@ -123,8 +122,6 @@ public class Untangler {
 
     private Double compositeValue(Partition a, Partition b){
 
-        System.out.println("chiamata");
-        //System.out.println("a ids: "+a.getGeneratedFrom()+"b ids: "+b.getGeneratedFrom());
         PriorityQueue<Double> maxPQueue = new PriorityQueue<>(Collections.reverseOrder());
         for(int i=0; i<a.getGeneratedFrom().size(); i++){
             int k=a.getGeneratedFrom().get(i);
@@ -138,7 +135,7 @@ public class Untangler {
                     maxPQueue.add(item.getConfidenceValue());
                 }
 
-                System.out.println("A: "+a.getId()+" B: "+b.getId()+" value: "+item.getConfidenceValue());
+
 
             }
         }
@@ -184,15 +181,47 @@ public class Untangler {
             //creo la partizione matrixSize+1
             Partition compositePartition= new Partition();
             compositePartition.setId(matrixSize);
-            compositePartition.getGeneratedFrom().addAll(Arrays.asList(matrixSize,indexI,indexJ));
-            //compositePartition.getGeneratedFrom().add(matrixSize);
+            //compositePartition.getGeneratedFrom().addAll(Arrays.asList(matrixSize,indexI,indexJ));
+            compositePartition.getGeneratedFrom().add(matrixSize);
+
+            for(Integer i: partitionList.get(indexI).getGeneratedFrom()){
+                Partition p= partitionList.get(i);
+                for(Integer s: p.getGeneratedFrom()){
+                    if(!compositePartition.getGeneratedFrom().contains(s))
+                        compositePartition.getGeneratedFrom().add(s);
+                }
+            }
+
+            for(Integer i: partitionList.get(indexJ).getGeneratedFrom()){
+                Partition p= partitionList.get(i);
+                for(Integer s: p.getGeneratedFrom()){
+                    if(!compositePartition.getGeneratedFrom().contains(s))
+                        compositePartition.getGeneratedFrom().add(s);
+                }
+            }
             //compositePartition.getGeneratedFrom().addAll(partitionList.get(indexI).getGeneratedFrom());
             //compositePartition.getGeneratedFrom().addAll(partitionList.get(indexI).getGeneratedFrom());
-            compositePartition.getPaths().addAll(partitionList.get(indexI).getPaths());
-            compositePartition.getPaths().addAll(partitionList.get(indexJ).getPaths());
+
+            //System.out.println(" I: \n "+partitionList.get(indexI).getPaths());
+            //System.out.println(" J: \n "+partitionList.get(indexJ).getPaths());
+
+            for(Integer i: partitionList.get(indexI).getGeneratedFrom()){
+                Partition p= partitionList.get(i);
+                for(String s: p.getPaths()){
+                    if(!compositePartition.getPaths().contains(s))
+                        compositePartition.getPaths().add(s);
+                }
+            }
+            for(Integer i: partitionList.get(indexJ).getGeneratedFrom()){
+                Partition p= partitionList.get(i);
+                for(String s: p.getPaths()){
+                    if(!compositePartition.getPaths().contains(s))
+                        compositePartition.getPaths().add(s);
+                }
+            }
+            //compositePartition.getPaths().addAll(partitionList.get(indexI).getPaths());
+            //compositePartition.getPaths().addAll(partitionList.get(indexJ).getPaths());
             int min=Collections.min(compositePartition.getGeneratedFrom());
-            System.out.println("generate: "+compositePartition.getGeneratedFrom());
-            System.out.println(min);
             if(min>=startingMatrixSize) break;
             for(int j=0; j<matrixSize; j++){
                 if(partitionList.get(j).isActive()==false){
