@@ -5,6 +5,7 @@ import Beans.StagedCommit;
 import Executor.Extractor;
 import Untangler.Untangler;
 import Utils.JschConfigSessionFactory;
+import Utils.StringCostants;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -72,25 +73,25 @@ public class Tester {
 
         for(String path : git.status().call().getAdded()){
             if(!path.contains(".java")) continue;
-            CommitChange change=new CommitChange(path, "ADD");
+            CommitChange change=new CommitChange(path, StringCostants.ADD);
             staged.getChanges().add(change);
         }
 
         for(String path : git.status().call().getChanged()){
             if(!path.contains(".java")) continue;
-            CommitChange change=new CommitChange(path, "CHANGE");
+            CommitChange change=new CommitChange(path, StringCostants.CHANGE);
             staged.getChanges().add(change);
         }
 
         for(String path : git.status().call().getModified()){
             if(!path.contains(".java")) continue;
-            CommitChange change=new CommitChange(path, "MODIFY");
+            CommitChange change=new CommitChange(path, StringCostants.MODIFY);
             staged.getChanges().add(change);
         }
 
         for(String path : git.status().call().getRemoved()){
             if(!path.contains(".java")) continue;
-            CommitChange change=new CommitChange(path, "REMOVE");
+            CommitChange change=new CommitChange(path, StringCostants.REMOVE);
             staged.getChanges().add(change);
         }
 
@@ -115,11 +116,11 @@ public class Tester {
                 CommitChange c= staged.findOne(path);
                 if(c==null) continue;
                 switch (c.getAction()){
-                    case "REMOVE":
+                    case StringCostants.REMOVE:
                         git.rm().addFilepattern(path).call(); break;
-                    case "CHANGE":
-                    case "MODIFY":
-                    case "ADD":
+                    case StringCostants.CHANGE:
+                    case StringCostants.MODIFY:
+                    case StringCostants.ADD:
                         git.add().addFilepattern(path).call(); break;
                     default: break;
 
