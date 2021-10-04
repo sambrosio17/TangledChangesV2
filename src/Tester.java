@@ -1,5 +1,7 @@
 import Beans.Commit;
+import Beans.CommitChange;
 import Beans.Partition;
+import Beans.StagedCommit;
 import Executor.Extractor;
 import Untangler.Untangler;
 import Utils.JschConfigSessionFactory;
@@ -25,6 +27,7 @@ public class Tester {
         String commitcode= (new Scanner(System.in)).nextLine();
         System.out.println("ok, adesso elaboro");*/
 
+        /*
         String repoUrl="https://github.com/sambrosio17/secretBookTSW.git";
         String commitId="deb41ddf46f1acd0864c0b9120cbad4a18c183be";
         int stopCondition=15;
@@ -51,6 +54,116 @@ public class Tester {
 
         //System.out.println(result);
 
+
+         */
+
+
+        String repoUrl="D:/TestRepos/TangledChangesV2";
+        //String commitId="deb41ddf46f1acd0864c0b9120cbad4a18c183be";
+        int stopCondition=15;
+
+        HashMap<String, Commit> list = (new Extractor(repoUrl)).doExtract();
+
+
+        //Apri la repository
+        Git git=Git.open(new File("D:/TestRepos/TangledChangesV2"));
+        //recupera i file all'interno della staging area
+        StagedCommit staged=new StagedCommit();
+
+        for(String path : git.status().call().getAdded()){
+            if(!path.contains(".java")) continue;
+            CommitChange change=new CommitChange(path, "ADD");
+            staged.getChanges().add(change);
+        }
+
+        for(String path : git.status().call().getChanged()){
+            if(!path.contains(".java")) continue;
+            CommitChange change=new CommitChange(path, "CHANGE");
+            staged.getChanges().add(change);
+        }
+
+        for(String path : git.status().call().getModified()){
+            if(!path.contains(".java")) continue;
+            CommitChange change=new CommitChange(path, "MODIFY");
+            staged.getChanges().add(change);
+        }
+
+        for(String path : git.status().call().getRemoved()){
+            if(!path.contains(".java")) continue;
+            CommitChange change=new CommitChange(path, "REMOVE");
+            staged.getChanges().add(change);
+        }
+
+        Untangler algo = new Untangler(staged, list, stopCondition);
+        List<Partition> result = algo.doUntangle();
+
+        System.out.println("Repository: "+repoUrl);
+        //System.out.println("Commmit ID: "+commitId);
+        System.out.println("La repository ha "+list.size()+" commit.");
+        System.out.println("La stage area contiene "+staged.getChanges().size()+" file.");
+        System.out.println("Partizioni Create: "+result.size());
+        System.out.println(result);
+
+        System.out.println("\n\n "+list);
+
+        git.reset().call();
+
+        System.out.println(git.status().call().getUncommittedChanges());
+
+        for(Partition p : result){
+            for(String path : p.getPaths()){
+                CommitChange c= staged.findOne(path);
+                if(c==null) continue;
+                switch (c.getAction()){
+                    case "REMOVE":
+                        git.rm().addFilepattern(path).call(); break;
+                    case "CHANGE":
+                    case "MODIFY":
+                    case "ADD":
+                        git.add().addFilepattern(path).call(); break;
+                    default: break;
+
+                }
+            }
+            git.commit().setMessage("buonaseraaaaaaaa").setAuthor("sasino","s@outlook.it").call();
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /*
         SshSessionFactory sshSessionFactory = new JschConfigSessionFactory();
 
         //trasforma l'url dello repo con protocollo ssh
@@ -104,7 +217,7 @@ public class Tester {
 
         //soluzione 2: aggiungere un commento che indica l'esecuzione dell'algoritmo all'interno di ciascun file di cui fare il commit
 
-        String radix="./"+repoUrl.replace("https://github.com/","").split("/")[1].replace(".git","")+"/.git/";
+        //String radix="./"+repoUrl.replace("https://github.com/","").split("/")[1].replace(".git","")+"/.git/";
 
         /*
         Writer output;

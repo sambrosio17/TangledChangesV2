@@ -5,6 +5,7 @@ import Utils.RepoVisitor;
 import org.repodriller.RepositoryMining;
 import org.repodriller.filter.range.Commits;
 import org.repodriller.scm.GitRemoteRepository;
+import org.repodriller.scm.GitRepository;
 
 import java.util.HashMap;
 
@@ -21,7 +22,7 @@ public class Extractor {
     public HashMap<String, Commit> doExtract(){
 
         new RepositoryMining()
-                .in(GitRemoteRepository.hostedOn(repoUrl).buildAsSCMRepository())
+                .in(GitRepository.singleProject(repoUrl))
                 .through(Commits.all())
                 .process(new RepoVisitor(this))
                 .mine();

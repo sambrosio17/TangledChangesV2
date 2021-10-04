@@ -3,7 +3,7 @@ package Beans;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Commit {
+public class Commit extends StagedCommit{
 
     public String id;
     public String author;

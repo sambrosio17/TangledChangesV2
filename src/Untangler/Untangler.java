@@ -13,7 +13,7 @@ import java.util.*;
 
 public class Untangler {
 
-    private Beans.Commit commit;
+    private Beans.StagedCommit commit;
     private HashMap<String, Commit> map;
     private PackageDistance packageDistance;
     private ChangeCoupling changeCoupling;
@@ -21,7 +21,7 @@ public class Untangler {
     private int stopCondition;
     private int startingMatrixSize=0;
 
-    public Untangler(Beans.Commit commit, HashMap<String, Commit> map, int stopCondition){
+    public Untangler(Beans.StagedCommit commit, HashMap<String, Commit> map, int stopCondition){
         this.commit = commit;
         this.map= map;
         this.stopCondition = stopCondition;
