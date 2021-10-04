@@ -67,7 +67,6 @@ public class Tester {
 
 
 
-
         //soluzione 1: rimozione dei file dalla repo e successiva aggiunta
 
         /*
@@ -131,7 +130,7 @@ public class Tester {
 
         //soluzione 3: creare una nuova branch riservata all'untangling (non funziona modificare il file)
 
-
+        /*
         git.checkout().setCreateBranch(true).setName("UNTANGLED").setOrphan(true).setForce(true).call();
 
         for(int i=0; i< result.size(); i++){
@@ -150,9 +149,11 @@ public class Tester {
 
         git.close();
 
+         */
+
         //elimino la clone della repository
 
-        FileUtils.deleteDirectory(new File(radix.replace("/.git/","")));
+        //FileUtils.deleteDirectory(new File(radix.replace("/.git/","")));
 
 
 
